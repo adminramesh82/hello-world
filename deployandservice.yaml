@@ -1,34 +1,44 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: eks
-  namespace: default
+  name: deployment-version-1
+  labels:
+    client: eks
 spec:
-  replicas: 2
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+    type: RollingUpdate
+  replicas: 3
+  minReadySeconds: 10
   selector:
     matchLabels:
-      app: web
+      role: webserver
   template:
     metadata:
+      name: web
       labels:
-        app: web
+        role: webserver
     spec:
       containers:
-        - name: eks-container
-          image: 234934568007.dkr.ecr.eu-central-1.amazonaws.com/ecr_repo
-          ports:
-            - containerPort: 80
+      - name: web
+        image: 234934568007.dkr.ecr.eu-central-1.amazonaws.com/ecr_repo
+        ports:
+        - name: http
+          containerPort: 8070
+          protocol: TCP
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: eks-service
+  name: eks_service
+  labels:
+    role: webserver
 spec:
+  type: LoadBalancer
   selector:
-    app: web
+    role: webserver
   ports:
-    - name: eks-image
-      nodePort: 31555
-      port: 80
-        
-  type: NodePort  
+    - port: 80  
